@@ -1,6 +1,42 @@
 use super::*;
 
 #[test]
+fn test_chat_frame_preserves_prose_newlines() {
+    let _lock = viewport_snapshot_test_lock();
+    for width in [80, 120] {
+        let app = TestState {
+            display_messages: vec![DisplayMessage::assistant(
+                "First **point**.\nSecond point.\nThird point.".to_string(),
+            )],
+            ..Default::default()
+        };
+        let backend = ratatui::backend::TestBackend::new(width, 30);
+        let mut terminal = ratatui::Terminal::new(backend).expect("terminal");
+        terminal
+            .draw(|frame| crate::tui::ui::draw(frame, &app))
+            .expect("draw");
+        let buffer = terminal.backend().buffer();
+        let rows: Vec<String> = (0..30)
+            .map(|y| (0..width).map(|x| buffer[(x, y)].symbol()).collect())
+            .collect();
+        let positions: Vec<usize> = ["First point.", "Second point.", "Third point."]
+            .iter()
+            .map(|text| {
+                rows.iter()
+                    .position(|row| row.contains(text))
+                    .unwrap_or_else(|| panic!("Missing {text} in frame:\n{}", rows.join("\n")))
+            })
+            .collect();
+        assert_eq!(positions[1], positions[0] + 1, "{}", rows.join("\n"));
+        assert_eq!(positions[2], positions[1] + 1, "{}", rows.join("\n"));
+        println!(
+            "Verified {width}-column frame:\n{}",
+            rows[positions[0]..=positions[2]].join("\n")
+        );
+    }
+}
+
+#[test]
 fn test_render_rounded_box_sides_aligned() {
     let content = vec![
         Line::from("short"),
