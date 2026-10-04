@@ -676,20 +676,17 @@ pub fn render_markdown_with_width(text: &str, max_width: Option<usize>) -> Vec<L
                 if in_image {
                     image_alt.push(' ');
                 } else if !in_code_block {
-                    if blockquote_depth > 0 {
-                        flush_current_line_with_alignment(
-                            &mut lines,
-                            &mut current_spans,
-                            structured_markdown_alignment(
-                                blockquote_depth,
-                                &list_stack,
-                                in_definition_list,
-                                in_footnote_definition,
-                            ),
-                        );
-                    } else {
-                        current_spans.push(Span::raw(" "));
-                    }
+                    // Preserve the line breaks in chat responses rather than joining prose.
+                    flush_current_line_with_alignment(
+                        &mut lines,
+                        &mut current_spans,
+                        structured_markdown_alignment(
+                            blockquote_depth,
+                            &list_stack,
+                            in_definition_list,
+                            in_footnote_definition,
+                        ),
+                    );
                 }
             }
             Event::HardBreak => {
