@@ -1,4 +1,22 @@
 #[test]
+fn test_prose_softbreaks_are_preserved() {
+    let md = "First **point**.\nSecond point.\nThird point.";
+    let expected = "First point.\nSecond point.\nThird point.";
+    for mode in [MarkdownSpacingMode::Compact, MarkdownSpacingMode::Document] {
+        with_markdown_spacing_mode_override(Some(mode), || {
+            assert_eq!(
+                lines_to_string(&render_markdown_with_width(md, Some(80))),
+                expected
+            );
+            assert_eq!(
+                lines_to_string(&render_markdown_lazy(md, Some(80), 0..100)),
+                expected
+            );
+        });
+    }
+}
+
+#[test]
 fn test_center_aligned_wrap_balances_lines() {
     let line = Line::from("aa aa aa aa aa aa aa aa aa").alignment(Alignment::Center);
     let wrapped = wrap_line(line, 20);
